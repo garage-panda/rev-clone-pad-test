@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app } from 'electron';
 import WindowManager from './utils/window-manager';
 
 if (require('electron-squirrel-startup')) {

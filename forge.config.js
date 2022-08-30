@@ -12,6 +12,7 @@ module.exports = {
     icon: iconPath,
     overwrite: true,
   },
+  packagerConfig: {},
   publishers: [
     {
       name: '@electron-forge/publisher-github',
@@ -31,14 +32,39 @@ module.exports = {
       platforms: ['win32'],
       config: {
         authors: 'Full Impact Technologies',
-        name: 'REVClonePad',
+        name: 'rev_clone_pad',
         exe: 'Rev Clone Pad.exe',
         iconUrl: iconPath,
         setupIcon: iconPath,
-        setupExe: 'Install REV Clone Pad.exe',
-        loadingGif: path.resolve(__dirname, './assets/logo_spinning_white.gif'),
+        setupExe: 'REV Clone Pad Setup.exe',
         noMsi: true,
       },
     },
   ],
+  plugins: [
+    [
+      "@electron-forge/plugin-webpack",
+      {
+        mainConfig: "./webpack.main.config.js",
+        renderer: {
+          config: "./webpack.renderer.config.js",
+          entryPoints: [
+            {
+              html: "./src/ui/main/index.html",
+              js: "./src/ui/main/index.tsx",
+              name: "main",
+              preload: {
+                js: "./src/preload.ts"
+              }
+            },
+            {
+              html: "./src/ui/loading/index.html",
+              js: "./src/ui/loading/index.tsx",
+              name: "loading"
+            }
+          ]
+        }
+      }
+    ]
+  ]
 };
