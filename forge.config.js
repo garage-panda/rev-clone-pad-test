@@ -20,8 +20,8 @@ module.exports = {
       config: {
         authToken: process.env.FORGE_TOKEN,
         repository: {
-          owner: 'Accedia',
-          name: 'force-import-technology',
+          owner: 'garage-panda',
+          name: 'rev-clone-pad-test',
         },
         draft: false,
       },
