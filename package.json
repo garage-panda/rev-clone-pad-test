@@ -1,6 +1,7 @@
 {
-  "name": "rev-clone-pad-v2",
-  "productName": "rev-clone-pad-v2",
+  "name": "rev-clone-pad",
+  "appname": "REV Clone Pad",
+  "productName": "REV Clone Pad",
   "version": "1.0.0",
   "description": "My Electron application description",
   "main": ".webpack/main",
