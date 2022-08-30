@@ -13,10 +13,6 @@ jobs:
           
       - name: Install dependencies
         run: npm install
-        
-      - name: Build
-        working-directory: ./electron-app
-        run: npm run build
 
       - name: Publish Application
         env:
