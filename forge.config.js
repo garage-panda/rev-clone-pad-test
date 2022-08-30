@@ -1,5 +1,6 @@
 /* eslint-disable */
 const path = require('path');
+const packageJson = require('./package.json');
 
 const iconPath = path.resolve(__dirname, './assets/icon-white-bg.ico');
 
@@ -36,7 +37,7 @@ module.exports = {
         exe: 'Rev Clone Pad.exe',
         iconUrl: iconPath,
         setupIcon: iconPath,
-        setupExe: 'REV Clone Pad Setup.exe',
+        setupExe: `REV Clone Pad Setup ${packageJson.version}.exe`,
         noMsi: true,
       },
     },
