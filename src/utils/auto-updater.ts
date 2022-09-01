@@ -1,4 +1,4 @@
-import { app, autoUpdater, BrowserWindow, dialog, MessageBoxOptions, shell } from 'electron';
+import { app, autoUpdater, BrowserWindow, dialog, MessageBoxOptions } from 'electron';
 import log from 'electron-log';
 import { Endpoints } from '@octokit/types';
 import fs from 'fs';
@@ -6,6 +6,7 @@ import path from 'path';
 import axios from 'axios';
 import * as stream from 'stream';
 import { promisify } from 'util';
+import { sleep } from './sleep';
 import { createDir, getFileExtension } from './fs-helper';
 import { Channel, UpdateStatus } from '../shared/enums';
 
@@ -28,16 +29,13 @@ class AutoUpdater {
   public currentVersion: string;
   public latestVersion: string;
 
-  constructor(private window: BrowserWindow) {
-    log.info('APP: ' + app);    
-  }
+  constructor(private window: BrowserWindow) {}
 
   public async checkForUpdates(): Promise<void> {
     this.sendUpdateStatus(UpdateStatus.Checking);
     const { version, assets } = await this.getLatestRelease();
     const shouldUpdate = this.isUpdateAvailable(app.getVersion(), version);
     if (!shouldUpdate) {
-      this.sendUpdateStatus(UpdateStatus.NoUpdates);
       return;
     }
 
@@ -80,7 +78,6 @@ class AutoUpdater {
   private async downloadAssets(assets: Asset[]): Promise<void> {
     const releases = assets.find((asset) => asset.type === null);
     const nupkg = assets.find((asset) => asset.type === 'nupkg');
-    log.info(JSON.stringify(nupkg));
 
     await Promise.all([
       this.download(releases.name, releases.download_url, false),
@@ -89,21 +86,15 @@ class AutoUpdater {
   }
 
   private async installUpdates(): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise((_resolve, reject) => {
       autoUpdater.on('error', (error: Error) => reject(error));
-      autoUpdater.on('update-not-available', () => {
-        this.sendUpdateStatus(UpdateStatus.NoUpdates);
-      })
       autoUpdater.on('update-available', () => {
         this.sendUpdateStatus(UpdateStatus.Installing);
       })
-      autoUpdater.on('update-downloaded', () => {
+      autoUpdater.on('update-downloaded', async () => {
         this.sendUpdateStatus(UpdateStatus.Complete);
-        shell.beep();
-
-        setTimeout(() => {
-          autoUpdater.quitAndInstall();
-        }, 3000);
+        await sleep(2000);
+        autoUpdater.quitAndInstall();
       });
       
       autoUpdater.setFeedURL({ url: this.tempDirPath });
@@ -135,8 +126,7 @@ class AutoUpdater {
   private handleError(error: Error): void {
     this.sendUpdateStatus(UpdateStatus.Error);
     this.window.show();
-
-    shell.beep();
+    
     const dialogOpts: MessageBoxOptions = {
       type: 'error',
       buttons: ['Close'],

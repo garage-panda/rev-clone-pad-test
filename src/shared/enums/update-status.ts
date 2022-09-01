@@ -1,6 +1,5 @@
 export enum UpdateStatus {
   Checking = 'checking',
-  NoUpdates = 'no_updates',
   Downloading = 'downloading',
   Installing = 'installing',
   Complete = 'complete',
@@ -9,9 +8,8 @@ export enum UpdateStatus {
 
 export const UPDATE_STATUS_MESSAGES: Record<UpdateStatus, string> = {
   [UpdateStatus.Checking]: 'Checking for updates...',
-  [UpdateStatus.NoUpdates]: 'No updates found!',
   [UpdateStatus.Downloading]: 'Downloading latest update...',
   [UpdateStatus.Installing]: 'Installing latest update...',
-  [UpdateStatus.Complete]: 'Latest update installed successfully! Restarting...',
+  [UpdateStatus.Complete]: 'Update installed successfully! Restarting...',
   [UpdateStatus.Error]: 'Oops! Something went wrong while installing latest update.'
 }
