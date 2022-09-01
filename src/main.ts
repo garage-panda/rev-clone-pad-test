@@ -1,4 +1,5 @@
 import { app } from 'electron';
+import log from 'electron-log';
 import WindowManager from './utils/window-manager';
 
 if (require('electron-squirrel-startup')) {
@@ -6,11 +7,14 @@ if (require('electron-squirrel-startup')) {
 }
 
 class Main {
-  windowManager = new WindowManager();
+  windowManager: WindowManager;
 
   constructor() {
-    app.on('ready', this.windowManager.showLoadingWindow);
-
+    this.windowManager = new WindowManager();
+    app.on('ready', () => {
+      log.info('App ready! Starting...');
+      this.windowManager.showLoadingWindow();
+    });
     this.registerListeners();
   }
 

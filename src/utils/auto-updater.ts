@@ -1,16 +1,15 @@
-import { autoUpdater, BrowserWindow, dialog, MessageBoxOptions, shell } from "electron";
-import log from "electron-log";
-import { Endpoints } from "@octokit/types";
-import fs from "fs";
-import path from "path";
-import * as stream from "stream";
-import { promisify } from "util";
-import axios, { AxiosRequestConfig } from "axios";
-import { createDir, getFileExtension } from "./fs-helper";
-import { appInstance } from "../main";
-import { Channel, UpdateStatus } from "../shared/enums";
+import { app, autoUpdater, BrowserWindow, dialog, MessageBoxOptions, shell } from 'electron';
+import log from 'electron-log';
+import { Endpoints } from '@octokit/types';
+import fs from 'fs';
+import path from 'path';
+import axios from 'axios';
+import * as stream from 'stream';
+import { promisify } from 'util';
+import { createDir, getFileExtension } from './fs-helper';
+import { Channel, UpdateStatus } from '../shared/enums';
 
-type LatestReleaseResponse = Endpoints["GET /repos/{owner}/{repo}/releases/latest"]["response"]["data"];
+type LatestReleaseResponse = Endpoints['GET /repos/{owner}/{repo}/releases/latest']['response']['data'];
 
 type Asset = {
   url: string;
@@ -30,35 +29,36 @@ class AutoUpdater {
   public latestVersion: string;
 
   constructor(private window: BrowserWindow) {
-    this.tempDirPath = path.join(appInstance.getPath("temp"), "NTWRK");
-    createDir(this.tempDirPath);
+    log.info('APP: ' + app);    
   }
 
   public async checkForUpdates(): Promise<void> {
     this.sendUpdateStatus(UpdateStatus.Checking);
     const { version, assets } = await this.getLatestRelease();
-    const shouldUpdate = this.isUpdateAvailable(appInstance.getVersion(), version);
+    const shouldUpdate = this.isUpdateAvailable(app.getVersion(), version);
     if (!shouldUpdate) {
       this.sendUpdateStatus(UpdateStatus.NoUpdates);
       return;
     }
 
+    this.tempDirPath = path.join(app.getPath('temp'), 'NTWRK');
+    createDir(this.tempDirPath);
+
     this.sendUpdateStatus(UpdateStatus.Downloading);
     await this.downloadAssets(assets);
-
-    this.sendUpdateStatus(UpdateStatus.Installing);
+    
     try {
       await this.installUpdates();
     } catch (e) {
       log.error("Error applying the updates", e);
       this.handleError(e);
-      appInstance.quit();
+      app.quit();
     }
   }
 
   private async getLatestRelease(): Promise<LatestRelease> {
     const response = await axios.get<LatestReleaseResponse>(
-      "https://api.github.com/repos/Accedia/rev-clone-pad/releases/latest"
+      'https://api.github.com/repos/garage-panda/rev-clone-pad-test/releases/latest'
     );
 
     const assets = response.data.assets.map((asset) => ({
@@ -70,7 +70,7 @@ class AutoUpdater {
     }));
 
     const latestRelease = {
-      version: response.data.tag_name.replace(/v/, ""),
+      version: response.data.tag_name.replace(/v/, ''),
       assets,
     };
 
@@ -79,7 +79,8 @@ class AutoUpdater {
 
   private async downloadAssets(assets: Asset[]): Promise<void> {
     const releases = assets.find((asset) => asset.type === null);
-    const nupkg = assets.find((asset) => asset.type === "nupkg");
+    const nupkg = assets.find((asset) => asset.type === 'nupkg');
+    log.info(JSON.stringify(nupkg));
 
     await Promise.all([
       this.download(releases.name, releases.download_url, false),
@@ -89,17 +90,22 @@ class AutoUpdater {
 
   private async installUpdates(): Promise<void> {
     return new Promise((resolve, reject) => {
-      autoUpdater.on("error", (error: Error) => reject(error));
-      autoUpdater.on("update-downloaded", () => {
+      autoUpdater.on('error', (error: Error) => reject(error));
+      autoUpdater.on('update-not-available', () => {
+        this.sendUpdateStatus(UpdateStatus.NoUpdates);
+      })
+      autoUpdater.on('update-available', () => {
+        this.sendUpdateStatus(UpdateStatus.Installing);
+      })
+      autoUpdater.on('update-downloaded', () => {
         this.sendUpdateStatus(UpdateStatus.Complete);
         shell.beep();
 
         setTimeout(() => {
           autoUpdater.quitAndInstall();
-          resolve();
         }, 3000);
       });
-
+      
       autoUpdater.setFeedURL({ url: this.tempDirPath });
       autoUpdater.checkForUpdates();
     });
@@ -108,22 +114,21 @@ class AutoUpdater {
   private async download(name: string, url: string, showProgress = true): Promise<void> {
     const finished = promisify(stream.finished);
     const filePath = `${this.tempDirPath}/${name}`;
-    const writer = fs.createWriteStream(filePath, { flags: "w+" });
-    const requestOptions: AxiosRequestConfig = {
-      responseType: "stream",
-    };
-
+    const writer = fs.createWriteStream(filePath, { flags: 'w+' });
+    const { data, headers } = await axios.get(url, { responseType: 'stream' });
+    
     if (showProgress) {
-      requestOptions.onDownloadProgress = (progress: ProgressEvent) => {
-        const { loaded, total } = progress;
+      let loaded = 0;
+      const total = parseFloat(headers['content-length']);
+
+      data.on('data', (chunk: string) => {
+        loaded += Buffer.byteLength(chunk);
         const percentCompleted = Math.floor((loaded / total) * 100);
         this.sendProgressPercent(percentCompleted);
-      };
+      })
     }
 
-    const response = await axios.get(url, requestOptions);
-    response.data.pipe(writer);
-
+    data.pipe(writer);
     return finished(writer);
   }
 
@@ -133,10 +138,10 @@ class AutoUpdater {
 
     shell.beep();
     const dialogOpts: MessageBoxOptions = {
-      type: "error",
-      buttons: ["Close"],
-      title: "Application Update",
-      message: "Error updating the application",
+      type: 'error',
+      buttons: ['Close'],
+      title: 'Application Update',
+      message: 'Error updating the application',
       detail: `Please report this issue to FIT. \n\n ${error.message}`,
     };
 
@@ -144,8 +149,8 @@ class AutoUpdater {
   }
 
   private isUpdateAvailable(currentVersion: string, latestVersion: string): boolean {
-    const [appMajor, appMinor, appPatch] = currentVersion.split(".").map((v) => parseInt(v));
-    const [latestMajor, latestMinor, latestPatch] = latestVersion.split(".").map((v) => parseInt(v));
+    const [appMajor, appMinor, appPatch] = currentVersion.split('.').map((v) => parseInt(v));
+    const [latestMajor, latestMinor, latestPatch] = latestVersion.split('.').map((v) => parseInt(v));
 
     if (appMajor < latestMajor) return true;
     if (appMajor === latestMajor && appMinor < latestMinor) return true;

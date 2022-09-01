@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  createStyles,
-  Box,
-  MantineProvider,
-  Loader,
-  Text,
-} from '@mantine/core';
+import { createStyles, Box, MantineProvider, Loader, Text } from '@mantine/core';
 import { Progress } from './components';
 import useIpcRenderer from '../shared/useIpcRenderer';
 import { Channel, UpdateStatus, UPDATE_STATUS_MESSAGES } from '../../shared/enums';
@@ -29,9 +23,13 @@ const App: React.FC = () => {
   const [progress, setProgress] = useState<number>(0);
 
   useEffect(() => {
-    renderer.on<UpdateStatus>(Channel.UpdateStatusChanged, (status) => setStatus(status));
+    renderer.on<string>(Channel.Version, (version) => console.log(version))
+    renderer.on<UpdateStatus>(Channel.UpdateStatusChanged, (status) => {
+      console.log(status);
+      setStatus(status)
+    });
     renderer.on<number>(Channel.DownloadPercentChanged, (value) => setProgress(value));
-  }, [])
+  }, []);
 
   return (
     <MantineProvider withNormalizeCSS>
@@ -43,7 +41,7 @@ const App: React.FC = () => {
         ) : (
           <Progress value={progress} />
         )}
-        <Text size='md'>{UPDATE_STATUS_MESSAGES[status]}</Text>
+        <Text size="md">{UPDATE_STATUS_MESSAGES[status]}</Text>
       </Box>
     </MantineProvider>
   );

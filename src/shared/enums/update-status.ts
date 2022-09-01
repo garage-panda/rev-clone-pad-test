@@ -12,6 +12,6 @@ export const UPDATE_STATUS_MESSAGES: Record<UpdateStatus, string> = {
   [UpdateStatus.NoUpdates]: 'No updates found!',
   [UpdateStatus.Downloading]: 'Downloading latest update...',
   [UpdateStatus.Installing]: 'Installing latest update...',
-  [UpdateStatus.Complete]: 'Latest update installed successfully!',
+  [UpdateStatus.Complete]: 'Latest update installed successfully! Restarting...',
   [UpdateStatus.Error]: 'Oops! Something went wrong while installing latest update.'
 }
