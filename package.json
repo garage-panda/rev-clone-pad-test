@@ -39,7 +39,7 @@
     "electron": "20.0.3",
     "eslint": "^8.22.0",
     "eslint-plugin-import": "^2.26.0",
-    "fork-ts-checker-webpack-plugin": "^7.2.13",
+    "fork-ts-checker-webpack-plugin": "^7.3.0",
     "node-loader": "^2.0.0",
     "node-sass": "^7.0.1",
     "sass-loader": "^13.0.2",
